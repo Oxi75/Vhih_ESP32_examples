@@ -8,7 +8,7 @@
 #include "wifi_defines.h"
 
 
-//homee definitionen
+// Homee definitions
 #define ID_ROOM_TEMP_DST 1
 #define ID_ROOM_TEMP_CUR 2
 #define ID_RETURN_TEMP 3
@@ -23,40 +23,42 @@
 #define CAAttributeTypeBatteryLowAlarm 69
 #define CAAttributeTypeNone 0
 
-//definitions for virtual homee
-virtualHomee vhih("my_vhih");      //homee instance
-const uint32_t VHIH_NODE_ID = 23;  //homee node ID (must be unique in the homee network)
+const char* vhih_name = "my_vhih";
 
-//constants for virtual devices
-const double HW_REV = 1.0;         //hardware revision (can be used for future updates)
-const double VERSION_f = 1.0;      //software version (can be used for future updates)
-const unsigned long CHECK_INTERVAL = 10000; // 10 Sekunden
-const unsigned long BattCheckInterval = 150000; // 5 min für Batteriestatus / -alarm
+// Definitions for virtual homee
+virtualHomee vhih(vhih_name);      // Homee instance
+const uint32_t VHIH_NODE_ID = 23;  // Homee node ID (must be unique in the homee network)
 
-//global variables for virtual devices
+// Constants for virtual devices
+const double HW_REV = 1.0;         // Hardware revision (can be used for future updates)
+const double VERSION_f = 1.0;      // Software version (can be used for future updates)
+const unsigned long CHECK_INTERVAL = 10000; // 10 seconds
+const unsigned long BattCheckInterval = 150000; // 5 min for battery status / alarm
+
+// Global variables for virtual devices
 double tempDest = 0.0;       
-double tempRoom = 0.0;          //default value after restart
-double humidityRoom = 0.0;                //current room humidity from BT device - 0.0 if not available
-double tempReturn = 0.0;      //return-water temperature (measured by DS18B20)
+double tempRoom = 0.0;          // Default value after restart
+double humidityRoom = 0.0;      // Current room humidity from BT device - 0.0 if not available
+double tempReturn = 0.0;        // Return-water temperature (measured by DS18B20)
 double currentBattery = 0.0;
-double battAlarm = 0.0;  //battery alarm (0 = no alarm, 1 = alarm)
+double battAlarm = 0.0;         // Battery alarm (0 = no alarm, 1 = alarm)
 double currentSignalStrength = 0.0;
-bool pumpState = false;  //pump is off by default
+bool pumpState = false;         // Pump is off by default
 
 bool ID_updated = false;
 unsigned long lastCheckTime;
 unsigned long lastBattCheckTime;
 
-uint32_t ID = 0xFFFFFFFF;  //attribute ID of this device
+uint32_t ID = 0xFFFFFFFF;  // Attribute ID of this device
 
 
-//Function Declarations
+// Function Declarations
 void IRAM_ATTR callBack_homeeReceiveValue(nodeAttributes* a);
 
 
 void IRAM_ATTR callBack_homeeReceiveValue(nodeAttributes* a)
 {
-  if (ID_updated == true) return;  //not ready to reiceive new values
+  if (ID_updated == true) return;  // Not ready to receive new values
 
     a->setCurrentValue(a->getTargetValue());
     vhih.updateAttribute(a);
@@ -73,8 +75,7 @@ void IRAM_ATTR callBack_homeeReceiveValue(nodeAttributes* a)
         Serial.println("Received new destination temperature " + String(tempDest)+ "°C");
         break;
       }
-/*      
-      case ID_ROOM_TEMP_CUR:
+/* case ID_ROOM_TEMP_CUR:
       {
         tempRoom = a->getCurrentValue();
         Serial.println("Received new room temperature " + String(tempRoom) + "°C");
@@ -83,13 +84,12 @@ void IRAM_ATTR callBack_homeeReceiveValue(nodeAttributes* a)
 */      
       default: ;
     }
-  }
-
+}
 
 
 void homee_setup()
 {
-  Serial.println("setup homee (ID" + String(VHIH_NODE_ID) +  ")");
+  Serial.println("Setup homee (ID" + String(VHIH_NODE_ID) +  ")");
   delay(1000);
 
 //  homeeMutex = xSemaphoreCreateMutex();
@@ -98,56 +98,57 @@ void homee_setup()
   nodeAttributes *na;
   
 
-  //Neues Gerät
-  n1 = new node(VHIH_NODE_ID, 3006, "vhih Testgeraet");  //1001 - Glühbirne, 3001 Thermomether
+  // New Device
+  n1 = new node(VHIH_NODE_ID, 3006, "vhih Test Device");  // 1001 - Bulb, 3001 Thermometer
 
-  //Attribut Raum-Soll-Temperatur
-  na = new nodeAttributes(6, ID_ROOM_TEMP_DST);  //Raum-Soll-Temperatur
-  na->setName("Raum-Soll-Temperatur");
+  // Attribute Room Setpoint Temperature
+  na = new nodeAttributes(6, ID_ROOM_TEMP_DST);
+  na->setName("Room Setpoint Temp");
   na->setUnit("°C");  
   na->setMinimumValue(5);
   na->setMaximumValue(28); 
   na->setCurrentValue(tempDest);
   na->setCallback(callBack_homeeReceiveValue);
   na->setEditable(true);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-  //Attribut Raum-Ist-Temperatur
-  na = new nodeAttributes(5, ID_ROOM_TEMP_CUR);  //Raum-Ist-Temperatur
-  na->setName("Raum-Ist-Temperatur");
+  // Attribute Room Current Temperature
+  na = new nodeAttributes(5, ID_ROOM_TEMP_CUR);
+  na->setName("Room Current Temp");
   na->setUnit("°C");  
   na->setMinimumValue(-10);
   na->setMaximumValue(50); 
   na->setCurrentValue(tempRoom);
   na->setCallback(callBack_homeeReceiveValue);
   na->setEditable(false);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-  //Attribut Rücklauftemperatur
-  na = new nodeAttributes(5, ID_RETURN_TEMP);  //Rücklauftemperatur
-  na->setName("Rücklauftemperatur");
+  // Attribute Return Temperature
+  na = new nodeAttributes(5, ID_RETURN_TEMP);
+  na->setName("Return Temperature");
   na->setUnit("°C");  
   na->setMinimumValue(-20);
   na->setMaximumValue(50); 
   na->setCurrentValue(tempReturn);
   na->setCallback(nullptr);
   na->setEditable(false);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-  //Attribut Pumpenstatus
-  na = new nodeAttributes(1);  //CAAttributeTypeOnOff (1); CAAttributeTypeLEDState (46)
-  na->setName("Pumpenstatus");
+  // Attribute Pump State
+  na = new nodeAttributes(1);  // CAAttributeTypeOnOff (1); CAAttributeTypeLEDState (46)
+  na->setName("Pump State");
   na->setId(ID_PUMP_STATE);
-  na->setUnit(pumpState ? "aus" : "ein");
+  na->setUnit(pumpState ? "off" : "on");
   na->setUnit("");
   na->setMinimumValue(0);
   na->setMaximumValue(1); 
   na->setCurrentValue(pumpState ? 0.0 : 1.1); 
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node  
+  n1->AddAttributes(na);       // Set attribute to node  
 
-  na = new nodeAttributes(43);  //CAAttributeTypeHardwareRevision
+  // Attribute Hardware Revision
+  na = new nodeAttributes(43);  // CAAttributeTypeHardwareRevision
   na->setName("Hardware Revision");
   na->setId(ID_HW_REV);
   na->setUnit("");
@@ -156,9 +157,10 @@ void homee_setup()
   na->setCurrentValue(HW_REV);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-  na = new nodeAttributes(44);  //CAAttributeTypeFirmwareRevision
+  // Attribute Firmware Version
+  na = new nodeAttributes(44);  // CAAttributeTypeFirmwareRevision
   na->setName("Firmware Version");
   na->setId(ID_SW_VER);
   na->setUnit("");  
@@ -167,10 +169,10 @@ void homee_setup()
   na->setCurrentValue(VERSION_f);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-
-  na = new nodeAttributes(8);  //CAAttributeTypeBatteryLevel
+  // Attribute Battery Level
+  na = new nodeAttributes(8);  // CAAttributeTypeBatteryLevel
   na->setName("Battery Level");
   na->setId(ID_BATT_LEVEL);
   na->setUnit("%");  
@@ -179,10 +181,10 @@ void homee_setup()
   na->setCurrentValue(currentBattery);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-
-  na = new nodeAttributes(CAAttributeTypeBatteryLowAlarm);  //CAAttributeTypeBatteryLevel
+  // Attribute Battery Low Alarm
+  na = new nodeAttributes(CAAttributeTypeBatteryLowAlarm);
   na->setName("Battery Low Alarm");
   na->setId(ID_BATT_ALARM);
   na->setUnit("");  
@@ -191,10 +193,10 @@ void homee_setup()
   na->setCurrentValue(battAlarm);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-
-  na = new nodeAttributes(CAAttributeTypeNone);  //
+  // Attribute Sensor Address
+  na = new nodeAttributes(CAAttributeTypeNone);
   na->setName("Sensor Address");
   na->setId(ID_ADDRESS);
   na->setUnit("0xFFFF FFFF");  
@@ -203,11 +205,10 @@ void homee_setup()
   na->setCurrentValue(32234234);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
- 
-
-  na = new nodeAttributes(2);  //CAAttributeTypeDimmingLevel
+  // Attribute Signal Strength
+  na = new nodeAttributes(2);  // CAAttributeTypeDimmingLevel
   na->setName("Signal Strength");
   na->setId(ID_SIGNAL_LEVEL);
   na->setUnit("%");  
@@ -216,14 +217,15 @@ void homee_setup()
   na->setCurrentValue(currentSignalStrength);
   na->setEditable(false);
   na->setCallback(nullptr);
-  n1->AddAttributes(na);       //set attribute to node
+  n1->AddAttributes(na);       // Set attribute to node
 
-  //Gerät hinzufügen
+  // Add Device
   vhih.addNode(n1);
 
   vhih.start();
 
   Serial.println("Homee configured");
+  Serial.println("");
   delay(1000);
 }
 
@@ -231,10 +233,10 @@ void homee_setup()
 void homee_updateValues()
 {  
   nodeAttributes *na;
-  Serial.println("update homee values");
+  Serial.println("Update homee values");
 //  Serial.printf("Stack High Water Mark: %d\n", uxTaskGetStackHighWaterMark(NULL));
 
-  // Aktualisierung der Zieltemperatur
+  // Update target temperature
   na = vhih.getAttributeById(ID_ROOM_TEMP_DST);
   if (na)
   {
@@ -243,7 +245,7 @@ void homee_updateValues()
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: tempDest");
+    Serial.println("homee attribute updated: tempDest");
   } 
 
   // Update Room-Temperature
@@ -255,10 +257,10 @@ void homee_updateValues()
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: tempRoom");
+    Serial.println("homee attribute updated: tempRoom");
   } 
 
-  // Aktualisierung der Rücklauftemperatur
+  // Update Return Temperature
   na = vhih.getAttributeById(ID_RETURN_TEMP);
   if (na)
   {
@@ -267,23 +269,23 @@ void homee_updateValues()
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: tempReturn");
+    Serial.println("homee attribute updated: tempReturn");
   } 
 
-  // Aktualisierung des Pumpenzustands (0 = aus, 1 = ein)
+  // Update Pump State (0 = off, 1 = on)
   na = vhih.getAttributeById(ID_PUMP_STATE);
   if (na)
   {
 //    Serial.printf("FreeHeap before: %u", ESP.getFreeHeap());
-//    na->setUnit(pumpState ? "aus" : "ein");
-    vhih.updateAttributeValue(na, pumpState ? 0.0 : 1.0);  //Those values shows nothing but are needed to update the unit value
+//    na->setUnit(pumpState ? "off" : "on");
+    vhih.updateAttributeValue(na, pumpState ? 0.0 : 1.0);  // Those values show nothing but are needed to update the unit value
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: Unit");
+    Serial.println("homee attribute updated: Unit");
   }
 
-  // Update Signal-Strength
+  // Update Signal Strength
   na = vhih.getAttributeById(ID_SIGNAL_LEVEL);
   if (na)
   {
@@ -292,10 +294,10 @@ void homee_updateValues()
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: SignalStrength");
+    Serial.println("homee attribute updated: SignalStrength");
   }
 
-  //Update Battery-Level
+  // Update Battery Level
   na = vhih.getAttributeById(ID_BATT_LEVEL);
   if (na)
   {
@@ -304,11 +306,11 @@ void homee_updateValues()
     delay(200);
     yield();
 //    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homme attribute updated: Battery");
+    Serial.println("homee attribute updated: Battery");
   }
 
 
-  //Update Battery-Alarm
+  // Update Battery Alarm
   na = vhih.getAttributeById(ID_BATT_ALARM);
   if (na)
   {
@@ -316,13 +318,11 @@ void homee_updateValues()
     vhih.updateAttributeValue(na, battAlarm);  
     delay(200);
     yield();
-    Serial.println("homme attribute updated: Battery Alarm");
+    Serial.println("homee attribute updated: Battery Alarm");
   }
 
-  Serial.println("homee Update done");
+  Serial.println("homee update done");
 }
-
-
 
 
 /***********************************************************************
@@ -332,31 +332,38 @@ void homee_updateValues()
 
 void WiFi_setup()
 {
-    Serial.println("Connect to WLAN");
-    
-    if (!WiFi.config(client_ip, gateway, subnet)) 
-    {
-        Serial.println("Error: Could not configure static IP address");
-    }
+  Serial.println("connecting to:");
+  Serial.println("  WiFi-name: " + ssid);
+  Serial.println("  Password: " + password);
+  Serial.println("  Gateway-IP: " + gateway.toString());
+  Serial.println("  subnet-Mask: " + subnet.toString());
+
+  if (!WiFi.config(client_ip, gateway, subnet)) 
+  {
+    Serial.println("... Error: Could not configure static IP address");
+  }
 
   if (ssid.length() > 32)
   {
-    Serial.println("SSID too long, using first 32 characters only.");
+    Serial.println("... SSID too long, using first 32 characters only.");
     ssid = ssid.substring(0, 32);
   }
   if (password.length() > 64)
   {
-    Serial.println("Password too long, using first 64 characters only.");
+    Serial.println("... Password too long, using first 64 characters only.");
     password = password.substring(0, 64);
   }
   
   WiFi.begin(ssid.c_str(), password.c_str());
   uint32_t i = 0;
+  
+  Serial.print("..");
+
   while (WiFi.status() != WL_CONNECTED)
   {
     if (i > 40)
     {
-      Serial.println("WiFi failed!");
+      Serial.println(" failed");
       delay(3000);
       ESP.restart();
     }
@@ -365,18 +372,25 @@ void WiFi_setup()
     i++;
   }
 
-  Serial.println("WLAN connected");
+  Serial.println(" done");
+  
+  // Output final connection details
+  Serial.println("");
+  Serial.print("New virtual homee (""" + String(vhih_name) + """) has IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println("");
+
   delay(1000);
 }
 
 
 void setup()
 {
-    // Serieller Monitor
+    // Serial Monitor
     Serial.begin(115200);
     Serial.println();
     Serial.println("*******************************************");
-    Serial.println("VHIH Testprogramm" + String(", V") + String(VERSION_f));
+    Serial.println("VHIH Test Program" + String(", V") + String(VERSION_f));
 
     WiFi_setup();
     homee_setup();
@@ -387,15 +401,15 @@ void WiFi_check(bool restart = true)
   if (WiFi.status() != WL_CONNECTED)
   {
     Serial.println("WLAN off -> restart");
-    delay(3000);   // Kurze Verzögerung zur Ausgabe der Fehlermeldung  
-    ESP.restart(); // ESP32 neu starten
+    delay(3000);   // Short delay to output the error message
+    ESP.restart(); // Restart ESP32
   }
 }
 
 
 
 /*************************************************************************************
-/**   from here, you'll find the functions for the standard FBH control mode mode   **
+/** from here, you'll find the functions for the standard FBH control mode mode   **
 /*************************************************************************************/
 static bool firstCall = true;
 void loop()
@@ -405,48 +419,46 @@ void loop()
       Serial.println("Enter control loop for the first time.");
       firstCall = false;
     }
-    yield();  //delay is not allowed here, because homee connection would become unstable
+    yield();  // Delay is not allowed here, because homee connection would become unstable
     
     WiFi_check();
 
     
-    // Taster-Verarbeitung
+    // Button processing
     uint32_t currentTime = millis();
 
 
-    // Temperaturprüfung (außer Bluetooth)
+    // Temperature check (except Bluetooth)
     if (millis() - lastCheckTime > CHECK_INTERVAL)
     {
       lastCheckTime = millis();
 
       Serial.println("Check temperature and humidity values");
-      // Hier können Sie den Code zur Überprüfung der Temperatur und Luftfeuchtigkeit einfügen
+      // Here you can insert code to check temperature and humidity
 
       homee_updateValues();
 
-        Serial.println("back from homee update");
+        Serial.println("Back from homee update");
     }
 
 
-    // Batteriestatus "prüfen"
+    // Check battery status
     if (millis() - lastBattCheckTime > BattCheckInterval)
     {
       lastBattCheckTime = millis();
 
       if (battAlarm == 0.0)
       {
-        Serial.println("set battery alarm");
+        Serial.println("Set battery alarm");
         battAlarm = 1.0;
       }
       else
       {
-        Serial.println("reset battery alarm");
+        Serial.println("Reset battery alarm");
         battAlarm = 0.0;
       } 
 
       homee_updateValues();
-      Serial.println("back from homee update");
+      Serial.println("Back from homee update");
     }
-
-    
 }
