@@ -1,0 +1,10 @@
+//copy or rename this file to "wifi_defines.h" and change the example values to your WiFi settings
+
+#pragma once
+#include "ESPAsyncWebServer.h"
+
+inline IPAddress client_ip = {192, 168, 5, 25};    //static IP address of the ESP32 (homee)
+inline IPAddress gateway = {192, 168, 5, 1};       //gateway IP address (router)
+inline IPAddress subnet = {255, 255, 255, 0};      //subnet mask (
+inline String ssid = "WiFiName";                   //SSID of the WIFI
+inline String password = "password123";            //password of the WIFI
