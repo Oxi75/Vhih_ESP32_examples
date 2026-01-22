@@ -1,22 +1,50 @@
-# Vhih ESP32 examples
-On this repositry I'd like to provide some examples how to control different devices connected on a ESP32 with homee smart home central.
-As development environment Arduino IDI 2.2.1 (or newer) is recommended. 
-The examples should also work with an ESP8266 but I have never tested it!
+# VHIH ESP32 Examples
 
-# general dependencies
-The underlaying API developed by DanielKoop: https://github.com/DanielKnoop/homee-api-esp32
-Some of the examples are also taken from there and where modified slightly.
+This repository contains **example and test projects** for using the **vhih (virtual homee interface)** on ESP32 devices.
 
-# dependencies for ESP32
-* ArduinoJson by Benoit Blanchon >= 6.21.3 (via Arduino library manager)
-* ESPAsyncWebServer >= 1.2.7 (https://github.com/DanielKnoop/ESPAsyncWebServer)
-* AsyncTCP >= 1.1.4 (https://github.com/dvarrel/AsyncTCP)
+The `develop` branch itself does **not** contain a runnable example.  
+It serves as an **entry point and overview** for the repository.
 
-# dependencies for ESP8266 (not tested!!)
-* ArduinoJson 6.17.3 (bblanchon)
-* ESPAsyncWebServer 1.2.7 (https://github.com/DanielKnoop/ESPAsyncWebServer)
-* ESPAsyncTCP 1.2.2 (https://github.com/me-no-dev/AsyncTCP)
-* ESPAsyncUDP (https://github.com/DanielKnoop/ESPAsyncUDP)
+All actual example applications are located on **separate branches**.
 
-# other information
-I have no connection to homee GmbH or to codeatelier GmbH. 
+---
+
+## Repository Structure
+
+Each branch in this repository contains a **self-contained PlatformIO project** with a specific focus or library setup.
+
+To work with an example, switch to the corresponding branch and follow the instructions in its `README.md`.
+
+---
+
+## Available Example Branches
+
+### `general_vhih_new_libs`
+
+- ESP32 example project using **newer (but not latest)** versions of:
+  - ESPAsyncWebServer
+  - AsyncTCP
+  - ArduinoJson
+- Uses a **vhih fork adapted to the newer async networking stack**
+- Not compatible with the original vhih library (v0.2.7)
+- Demonstrates:
+  - Running a virtual homee on an ESP32
+  - Bidirectional communication between ESP32 and homee
+
+---
+
+### `general_vhih_classic`
+
+- ESP32 example project using the **original vhih library**
+- Uses the **historical dependency versions** as recommended by the original author
+- Maintains **full backward compatibility** with vhih v0.2.7
+- Demonstrates the same virtual homee concept using the classic setup
+
+---
+
+## How to Use
+
+1. Clone the repository
+2. Switch to the desired branch:
+   ```bash
+   git checkout <branch-name>
