@@ -23,11 +23,15 @@
 #define CAAttributeTypeBatteryLowAlarm 69
 #define CAAttributeTypeNone 0
 
-const char* vhih_name = "my_vhih";
+#define NO_FORK    //comment / remove this line to use the original homee-api-esp32 library instead of the forked version
 
 // Definitions for virtual homee
-virtualHomee vhih(vhih_name);      // Homee instance
-const uint32_t VHIH_NODE_ID = 23;  // Homee node ID (must be unique in the homee network)
+const char* vhih_name = "my_vhih";
+const char *virtualDeviceName = "vhih Test Device";
+const uint32_t VHIH_NODE_ID = 88;         // Homee node ID (must be unique in the homee network)
+
+
+virtualHomee vhih(vhih_name);       // Homee instance
 
 // Constants for virtual devices
 const double HW_REV = 1.0;         // Hardware revision (can be used for future updates)
@@ -99,11 +103,13 @@ void homee_setup()
   
 
   // New Device
-  n1 = new node(VHIH_NODE_ID, 3006, "vhih Test Device");  // 1001 - Bulb, 3001 Thermometer
+  n1 = new node(VHIH_NODE_ID, 3006, virtualDeviceName);  // 1001 - Bulb, 3001 Thermometer
 
   // Attribute Room Setpoint Temperature
   na = new nodeAttributes(6, ID_ROOM_TEMP_DST);
+  #ifndef NO_FORK
   na->setName("Room Setpoint Temp");
+  #endif
   na->setUnit("°C");  
   na->setMinimumValue(5);
   na->setMaximumValue(28); 
@@ -114,7 +120,9 @@ void homee_setup()
 
   // Attribute Room Current Temperature
   na = new nodeAttributes(5, ID_ROOM_TEMP_CUR);
+  #ifndef NO_FORK
   na->setName("Room Current Temp");
+  #endif
   na->setUnit("°C");  
   na->setMinimumValue(-10);
   na->setMaximumValue(50); 
@@ -125,7 +133,9 @@ void homee_setup()
 
   // Attribute Return Temperature
   na = new nodeAttributes(5, ID_RETURN_TEMP);
+  #ifndef NO_FORK
   na->setName("Return Temperature");
+  #endif  
   na->setUnit("°C");  
   na->setMinimumValue(-20);
   na->setMaximumValue(50); 
@@ -136,7 +146,9 @@ void homee_setup()
 
   // Attribute Pump State
   na = new nodeAttributes(1);  // CAAttributeTypeOnOff (1); CAAttributeTypeLEDState (46)
+  #ifndef NO_FORK
   na->setName("Pump State");
+  #endif
   na->setId(ID_PUMP_STATE);
   na->setUnit(pumpState ? "off" : "on");
   na->setUnit("");
@@ -149,7 +161,9 @@ void homee_setup()
 
   // Attribute Hardware Revision
   na = new nodeAttributes(43);  // CAAttributeTypeHardwareRevision
+  #ifndef NO_FORK
   na->setName("Hardware Revision");
+  #endif
   na->setId(ID_HW_REV);
   na->setUnit("");
   na->setMinimumValue(0);
@@ -161,7 +175,9 @@ void homee_setup()
 
   // Attribute Firmware Version
   na = new nodeAttributes(44);  // CAAttributeTypeFirmwareRevision
+  #ifndef NO_FORK
   na->setName("Firmware Version");
+  #endif
   na->setId(ID_SW_VER);
   na->setUnit("");  
   na->setMinimumValue(0);
@@ -173,7 +189,9 @@ void homee_setup()
 
   // Attribute Battery Level
   na = new nodeAttributes(8);  // CAAttributeTypeBatteryLevel
+  #ifndef NO_FORK
   na->setName("Battery Level");
+  #endif
   na->setId(ID_BATT_LEVEL);
   na->setUnit("%");  
   na->setMinimumValue(0);
@@ -185,7 +203,9 @@ void homee_setup()
 
   // Attribute Battery Low Alarm
   na = new nodeAttributes(CAAttributeTypeBatteryLowAlarm);
+  #ifndef NO_FORK
   na->setName("Battery Low Alarm");
+  #endif
   na->setId(ID_BATT_ALARM);
   na->setUnit("");  
   na->setMinimumValue(0);
@@ -197,7 +217,9 @@ void homee_setup()
 
   // Attribute Sensor Address
   na = new nodeAttributes(CAAttributeTypeNone);
+  #ifndef NO_FORK 
   na->setName("Sensor Address");
+  #endif
   na->setId(ID_ADDRESS);
   na->setUnit("0xFFFF FFFF");  
   na->setMinimumValue(0);
@@ -209,7 +231,9 @@ void homee_setup()
 
   // Attribute Signal Strength
   na = new nodeAttributes(2);  // CAAttributeTypeDimmingLevel
+  #ifndef NO_FORK
   na->setName("Signal Strength");
+  #endif
   na->setId(ID_SIGNAL_LEVEL);
   na->setUnit("%");  
   na->setMinimumValue(0);
