@@ -23,11 +23,14 @@
 #define CAAttributeTypeBatteryLowAlarm 69
 #define CAAttributeTypeNone 0
 
-const char* vhih_name = "my_vhih";
 
 // Definitions for virtual homee
-virtualHomee vhih(vhih_name);      // Homee instance
-const uint32_t VHIH_NODE_ID = 23;  // Homee node ID (must be unique in the homee network)
+const char* vhih_name = "my_vhih";                   // vhih_name (must be unique in the homee network)
+const char *virtualDeviceName = "vhih Test Device";  // virtualDeviceName (must be unique on this vhih)
+const uint32_t VHIH_NODE_ID = 88;                    // Homee node ID (must be unique in the homee network)
+
+
+virtualHomee vhih(vhih_name);       // Homee instance
 
 // Constants for virtual devices
 const double HW_REV = 1.0;         // Hardware revision (can be used for future updates)
@@ -99,7 +102,7 @@ void homee_setup()
   
 
   // New Device
-  n1 = new node(VHIH_NODE_ID, 3006, "vhih Test Device");  // 1001 - Bulb, 3001 Thermometer
+  n1 = new node(VHIH_NODE_ID, 3006, virtualDeviceName);  // 1001 - Bulb, 3001 Thermometer
 
   // Attribute Room Setpoint Temperature
   na = new nodeAttributes(6, ID_ROOM_TEMP_DST);
