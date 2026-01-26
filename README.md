@@ -1,11 +1,11 @@
-# VHIH ESP32 Example
+# VHIH ESP32 Example – Roller Shutter Control
 
 This repository contains **multiple PlatformIO-based ESP32 test applications**, each located on a separate branch.
 
-The currently selected branch (**`general_vhih_new_libs`**) contains the example described below and uses newer versions of the required libraries.
+The currently selected branch (**`general_vhih_new_libs`**) contains the example described below and uses newer versions of the required libraries.  
 The branch **`general_vhih_classic`** uses the original vhih library and its historical dependencies.
 
-The project runs a **virtual homee instance on an ESP32** and exposes a test device with multiple attributes.  
+The project runs a **virtual homee instance on an ESP32** and exposes a **roller shutter (roller blind) device with multiple positions**.  
 It is intended as a **reference and learning example**, not as the vhih library itself.
 
 ---
@@ -27,19 +27,16 @@ The project is configured and tested using the versions defined in `platformio.i
 The example application:
 
 - Creates a **virtual homee (node)** running on an ESP32
-- Exposes a **test device** with several attributes
+- Exposes a **roller shutter device** with **multiple position-related attributes**
+- Demonstrates typical roller shutter functionality:
+  - Absolute positioning (e.g. 0–100 %)
+  - Intermediate positions
+  - Movement commands from homee to the ESP32
 - Demonstrates bidirectional communication:
-  - Values sent from the ESP32 to homee
-  - Commands and value changes sent from homee to the ESP32
+  - Position and state values sent from the ESP32 to homee
+  - Control commands and target position changes sent from homee to the ESP32
 
-The virtual homee uses the following default settings, which can be adjusted **at the beginning of `main.cpp`**:
-
-- Homee name: **`my_vhih`**
-- Homee ID: **88**
-- Device (node) name: **`vhih Test Device`**
-
-All values can be changed to match your setup.  
-Make sure that **all IDs and names are unique within your homee network**.
+This makes the example suitable as a **template for real roller shutter or blind controllers**.
 
 ---
 
