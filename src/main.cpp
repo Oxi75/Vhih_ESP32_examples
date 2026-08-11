@@ -5,6 +5,7 @@
 #include "AsyncTCP.h"
 #include "ESPAsyncWebServer.h"
 #include "virtualHomee.hpp"
+#include "virtualHomee/homee_defines.h"
 #include "wifi_defines.h"
 
 // Version und Konstanten
@@ -13,9 +14,8 @@ const String FIRMWARE_VERSION = String(FIRMWARE_VERSION_d, 1);
 
 // homee Attribute IDs
 const uint32_t ID_SHUTTER = 1;
-const uint32_t ID_3rd_POSITION = 2;
-const uint32_t ID_ENABLE = 3;
-const uint32_t ID_SW_VER = 4;
+const uint32_t ID_SW_VER = 2;
+const uint32_t ID_HW_REV = 3;
 
 
 // Definitions for virtual homee
@@ -27,17 +27,12 @@ const uint32_t VHIH_NODE_ID = 88;                    // Homee node ID (must be u
 virtualHomee vhih(vhih_name);       // Homee instance
 
 // Constants for virtual devices
-const double HW_REV = 1.0;         // Hardware revision (can be used for future updates)
+const double HW_REV = 1.0;         // Hardware revision, reported via the "Hardware Revision" attribute
 const double VERSION_f = 1.0;      // Software version (can be used for future updates)
 
 
 // Global variables for virtual devices
-double shutterPos = NAN;
 bool ID_updated = false;
-
-// Timing variables
-uint32_t lastCheckTime = 0;
-const uint32_t CHECK_INTERVAL = 20000;  // Interval to check sensor values [ms]
 
 uint32_t ID = 0xFFFFFFFF;  // Attribute ID of this device
 
@@ -65,55 +60,20 @@ void IRAM_ATTR callBack_homeeReceiveValue(nodeAttributes* a)
         Serial.print("Received new Shutter action (" + String(buffer) + "): ");
         if (buffer == 0.0)
         {
-          shutterPos = 2; //open
           Serial.println("open fully");
-          break;
         }
-        if (buffer == 1.0)
-        {
-          shutterPos = 0; //closed
-          Serial.println("close completely");
-          break;
-        }
-        if (buffer == 2.0)
-        {
-          shutterPos = -1; //stop moving
-          Serial.println("stop moving");          
-          break;
-        }
-        shutterPos = -2; //neutral value to indicate no action
-        Serial.println("do nothing");
-        break;
-      }
-
-      case ID_3rd_POSITION:
-      {
-        double buffer = a->getCurrentValue();
-        ID_updated = true;
-
-        if (buffer == 0.0) shutterPos = 0.0;       //close
-        else if (buffer == 1.0) shutterPos = 1.0; //middle position
-        else if (buffer == 2.0) shutterPos = 2.0; //open
-        else shutterPos = -2.0; //neutral value to indicate no action
-
-        Serial.print("Received new Shutter action (" + String(shutterPos) + "): ");
-        if (shutterPos == 0.0)
+        else if (buffer == 1.0)
         {
           Serial.println("close completely");
-          break;
         }
-        if (shutterPos == 1.0)
+        else if (buffer == 2.0)
         {
-          Serial.println("move to middle position");
-          break;
+          Serial.println("stop moving");
         }
-        if (shutterPos == 2.0)
+        else
         {
-          Serial.println("open fully");
-          break;
+          Serial.println("do nothing");
         }
-        Serial.println("do nothing");
-
         break;
       }
 
@@ -127,51 +87,33 @@ void homee_setup()
   Serial.println("Setup homee (ID" + String(VHIH_NODE_ID) +  ")");
   delay(1000);
 
-//  homeeMutex = xSemaphoreCreateMutex();
-
   node *n1;
   nodeAttributes *attr;
-  
 
   // New Device
-  n1 = new node(VHIH_NODE_ID, 2002, virtualDeviceName);  // 2002 - Rolladensteuerung
+  n1 = new node(VHIH_NODE_ID, CANodeProfileShutterPositionSwitch, virtualDeviceName);
 
-  // Attribut: Rolladen hoch
-  attr = new nodeAttributes(135, ID_SHUTTER);
+  // Attribut: Zustand (Rolladen Auf/Stopp/Zu)
+  attr = new nodeAttributes(CAAttributeTypeUpDown, ID_SHUTTER);
+  attr->setName("Zustand");
   attr->setEditable(true);
   attr->setCallback(callBack_homeeReceiveValue);
   n1->AddAttributes(attr);
 
-
-  //Attribut for (3rd) position
-  //if you know how fast your roller shutter moves, you can calculate the exact position value (0..100%)
-  //or you can set it to a fixed value like 0 = close, 1 = middel position, 2 = open
-  const uint32_t CAAttributeTypePosition = 15; // On/Off attribute type
-  attr = new nodeAttributes(CAAttributeTypePosition, ID_3rd_POSITION);  //open / closed state
-  attr->setName("3rd Position");
-  attr->setMaximumValue(2.0);
-  attr->setMinimumValue(0.0);
-  attr->setEditable(true);
-  attr->setCallback(callBack_homeeReceiveValue);
-  n1->AddAttributes(attr);       //set attribute to node
-
-
-  // Attribut: OnOff
-  attr = new nodeAttributes(1, ID_ENABLE);
-  attr->setName("enabled");
-  attr->setUnit("");
-  attr->setCurrentValue(1.0);
-  attr->setMaximumValue(1.0);
-  attr->setMinimumValue(0.0);
-  attr->setEditable(true);
-  attr->setCallback(callBack_homeeReceiveValue);
-  n1->AddAttributes(attr);
-    
   // Attribut: Firmware-Version
-  attr = new nodeAttributes(44, ID_SW_VER);
+  attr = new nodeAttributes(CAAttributeTypeFirmwareRevision, ID_SW_VER);
   attr->setName("Firmware Version");
   attr->setUnit("");
   attr->setCurrentValue(FIRMWARE_VERSION_d);
+  attr->setEditable(false);
+  attr->setCallback(nullptr);
+  n1->AddAttributes(attr);
+
+  // Attribut: Hardware-Revision
+  attr = new nodeAttributes(CAAttributeTypeHardwareRevision, ID_HW_REV);
+  attr->setName("Hardware Revision");
+  attr->setUnit("");
+  attr->setCurrentValue(HW_REV);
   attr->setEditable(false);
   attr->setCallback(nullptr);
   n1->AddAttributes(attr);
@@ -184,31 +126,6 @@ void homee_setup()
   Serial.println("Homee configured");
   Serial.println("");
   delay(1000);
-}
-
-
-void homee_updateValues()
-{  
-  nodeAttributes *na;
-  Serial.println("Update homee values (sending value from ESP32 to homee)");
-//  Serial.printf("Stack High Water Mark: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-/*
-  // Update target temperature
-  na = vhih.getAttributeById(ID_ROOM_TEMP_DST);
-  if (na)
-  {
-  //  Serial.printf("FreeHeap before: %u", ESP.getFreeHeap());
-    vhih.updateAttributeValue(na, tempDest);
-    delay(200);
-    yield();
-//    Serial.printf(", after: %u", ESP.getFreeHeap());
-    Serial.println("homee attribute updated: tempDest");
-  } 
-*/
-
-
-  Serial.println("homee update done");
 }
 
 
@@ -265,6 +182,7 @@ void WiFi_setup()
   Serial.println("");
   Serial.print("New virtual homee (""" + String(vhih_name) + """) has IP: ");
   Serial.println(WiFi.localIP());
+  Serial.println("Example: virtual homee roller shutter node (Zustand: Auf/Stopp/Zu, plus Firmware- and Hardware-Revision).");
   Serial.println("");
 
   delay(1000);
@@ -283,7 +201,7 @@ void setup()
     homee_setup();
 }
 
-void WiFi_check(bool restart = true)
+void WiFi_check()
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -295,9 +213,6 @@ void WiFi_check(bool restart = true)
 
 
 
-/*************************************************************************************
-/** from here, you'll find the functions for the standard FBH control mode mode   **
-/*************************************************************************************/
 static bool firstCall = true;
 void loop()
 {
@@ -307,27 +222,8 @@ void loop()
       firstCall = false;
     }
     yield();  // Delay is not allowed here, because homee connection would become unstable
-    
+
     WiFi_check();
 
-    
-    // Button processing
-    uint32_t currentTime = millis();
-
-
-    //check for new (sensor) values every CHECK_INTERVAL milliseconds and update homee
-    if (millis() - lastCheckTime > CHECK_INTERVAL)
-    {
-      lastCheckTime = millis();
-
-      // Serial.println("Check sensor values");
-      // Here you can insert code to check temperature and humidity
-
-      homee_updateValues();
-
-      Serial.println("Back from homee update");
-    }
-
     ID_updated = false; //you can use ID_updated flag in your main loop to process the new value
-
 }
