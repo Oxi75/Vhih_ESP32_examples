@@ -2,7 +2,7 @@
 
 This repository contains **multiple PlatformIO-based ESP32 test applications**, each located on a separate branch.
 
-The currently selected branch (**`rollershutter`**) contains the example described below.
+The currently selected branch (**`rollershutter_3rdPos`**) contains the example described below.
 
 The project runs a **virtual homee instance (vhih) on an ESP32** and exposes a single **roller shutter (roller blind) node**.
 It is intended as a **reference and learning example** and cannot control real hardware.
@@ -11,12 +11,16 @@ It is intended as a **reference and learning example** and cannot control real h
 
 ## What this example does
 
-- Creates one virtual homee node of type "Rolladensteuerung" (`CANodeProfileShutterPositionSwitch`).
-- Exposes exactly three attributes on that node:
-  - **Zustand** – Auf / Stopp / Zu (`CAAttributeTypeUpDown`). Editable: homee sends a command
-    (0 = open, 1 = close, 2 = stop), the ESP32 acknowledges it and logs the received action to
-    the serial console.
-  - **Firmware Version** (`CAAttributeTypeFirmwareRevision`) – static, read-only.
+- Creates one virtual homee node with a roller-shutter icon (`NodeIconShutter`) and exposes
+  exactly four attributes on it:
+  - **Up/Down** (`CAAttributeTypeUpDown`, min 0 / max 2) – editable control attribute:
+    `0` = open, `1` = close, `2` = stop. The ESP32 echoes the received target value back as the
+    current value and logs which command was received.
+  - **3rd Position** (`CAAttributeTypeOpenPartialImpulse`, min 0 / max 1) – editable momentary
+    push-button. Pressing it in homee sends `1`, the ESP32 acknowledges it, logs the action, and
+    resets the button back to `0` after ~500 ms (simulating a relay pulse - there is no real
+    hardware behind it).
+  - **Firmware Revision** (`CAAttributeTypeFirmwareRevision`) – static, read-only.
   - **Hardware Revision** (`CAAttributeTypeHardwareRevision`) – static, read-only.
 - Logs to the serial console (RS232/USB):
   - The WiFi connection status, the vhih name and its IP address, plus a one-line description
@@ -25,7 +29,18 @@ It is intended as a **reference and learning example** and cannot control real h
     `callBack_homeeReceiveValue()`.
 
 This makes the example a minimal, easy-to-read starting point for building your own
-virtual homee node with a control attribute plus version reporting.
+virtual homee shutter node with an Up/Down/Stop control, a momentary push-button, and version
+reporting.
+
+> **Note on the node profile:** homee's app/cube renders UI controls based on a fixed,
+> homee-internal mapping of node profile → expected attribute types (not documented in this
+> library). None of the tested profiles (including `CANodeProfileShutterPositionSwitch`) render
+> all four attributes above as controls at once - some get silently hidden depending on the
+> profile. As a workaround, this example passes an unmapped profile value
+> (`NODE_PROFILE_GENERIC` in `src/main.cpp`, currently `(uint32_t)(-1)`) to `node()`, which makes
+> homee fall back to rendering every editable attribute generically. This is the only approach
+> found so far that reliably shows all four controls in the WebUI. A proper named profile
+> constant for this should eventually be added to the `homee-api-esp32` library itself.
 
 ---
 
